@@ -56,8 +56,8 @@ syncClock();
 const paper = await fetch('./assets/paper.json').then(r => r.json());
 const paintings = PAINTINGS.map((_, i) => createPainting(i, paper[i + 1]));
 
-// 浮起动画：从纸面升起，稍微冲过头再落回
-const easeOutBack = t => 1 + 2.2 * (t - 1) ** 3 + 1.2 * (t - 1) ** 2;
+// 浮起动画：lift 从 0 走到 1，各层依次弹起的节奏在着色器里
+const LIFT_MS = 2200;
 let active = null, liftStart = 0, lastLost = { painting: null, at: 0 };
 
 function show(index, parent) {
@@ -71,8 +71,8 @@ function show(index, parent) {
 }
 
 function tick(renderer, time, dt) {
-  if (active) active.lift.value = easeOutBack(Math.min((performance.now() - liftStart) / 1600, 1));
-  atmosphere.update(dt, time, active ? Math.min(active.lift.value, 1) : 0, renderer.domElement.height);
+  if (active) active.lift.value = Math.min((performance.now() - liftStart) / LIFT_MS, 1);
+  atmosphere.update(dt, time, active ? active.lift.value : 0, renderer.domElement.height);
 }
 
 function loop(renderer, scene, camera, beforeRender) {
