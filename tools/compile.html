@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>编译识别文件</title>
+<style>
+  body{ font:16px/1.8 system-ui,sans-serif; max-width:560px; margin:40px auto; padding:0 16px; color:#2C2416; background:#F5F0E6; }
+  button{ font:inherit; padding:8px 20px; }
+</style>
+</head>
+<body>
+<h2>编译 targets.mind</h2>
+<p>读取 <code>images/1.jpg</code> ~ <code>images/5.jpg</code>，编译完成后下载 <code>targets.mind</code>，放到项目根目录（和 index.html 同级）。</p>
+<p>需要通过本地服务器打开本页，例如在项目根目录运行 <code>python3 -m http.server</code>，再访问 <code>http://localhost:8000/tools/compile.html</code>。</p>
+<button id="go">开始编译</button>
+<p id="status"></p>
+<script type="module">
+import { Compiler } from '../vendor/mindar/mindar-image.prod.js';
+
+const COUNT = 5;
+const status = document.getElementById('status');
+
+const loadImage = src => new Promise((resolve, reject) => {
+  const img = new Image();
+  img.onload = () => resolve(img);
+  img.onerror = reject;
+  img.src = src;
+});
+
+window.compileTargets = async () => {
+  const images = await Promise.all(Array.from({ length: COUNT }, (_, i) => loadImage(`../images/${i + 1}.jpg`)));
+  const compiler = new Compiler();
+  await compiler.compileImageTargets(images, p => { status.textContent = `编译中… ${p.toFixed(0)}%`; });
+  return compiler.exportData();
+};
+
+document.getElementById('go').onclick = async () => {
+  const data = await window.compileTargets();
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([data]));
+  a.download = 'targets.mind';
+  a.click();
+  status.textContent = '完成，已下载 targets.mind';
+};
+</script>
+</body>
+</html>
